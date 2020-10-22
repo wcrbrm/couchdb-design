@@ -1,9 +1,16 @@
 [package]
 name = "couchdb-design"
 version = "0.1.0"
-authors = ["wcrbrm <viclopata@gmail.com>"]
+authors = ["wcrbrm <webcerebrium@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+structopt = "0.3"
+serde = { version = "1.0", features = ["derive"] } 
+serde_json = "1.0"
+serde_yaml = "0.8"
+reqwest = { version = "0.10", features = ["blocking", "json"] }
+tokio = { version = "0.2", features = ["full"] }
+difference = "2.0"
