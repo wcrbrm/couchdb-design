@@ -45,11 +45,18 @@ impl fmt::Display for DesignView {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DesignDoc {
-    pub _origin: Option<String>,
     pub _id: String,
     pub _rev: Option<String>,
     pub language: Option<String>,
     pub views: HashMap<String, DesignView>,
+}
+
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DesignDocSubmitted {
+    // pub ok: bool,
+    pub id: String,
+    pub rev: String,
 }
 
 impl fmt::Display for DesignDoc {
@@ -72,8 +79,7 @@ impl DesignDoc {
     pub async fn from_url(url: &str) -> Result<Option<DesignDoc>, Box<dyn Error>> {
         let response = reqwest::get(url).await?;
         if response.status().is_success() {
-            let mut document = response.json::<DesignDoc>().await?;
-            document._origin = Some(url.to_string());
+            let document = response.json::<DesignDoc>().await?;
             return Ok(Some(document));
         }
         let err_doc = response.json::<CouchDbErrorMessage>().await?;
@@ -92,30 +98,28 @@ impl DesignDoc {
         Ok(document)
     }
 
-    pub async fn submit(doc: &DesignDoc) -> Result<DesignDoc, Box<dyn Error>> {
-        let origin = &doc._origin.clone().unwrap();
-        let rq = reqwest::Client::new().put(origin);
+    pub async fn submit(doc: &DesignDoc, url: &str) -> Result<DesignDocSubmitted, Box<dyn Error>> {
+        let rq = reqwest::Client::new().put(url);
         let response = rq
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&doc)?)
             .send()
             .await?;
-        
         if response.status().is_success() {
-            let document = response.json::<DesignDoc>().await?;
+            let document = response.json::<DesignDocSubmitted>().await?;
             return Ok(document);
         }
         let err_doc = response.json::<CouchDbErrorMessage>().await?;
-        Err(format!("{} URL: {}", err_doc, origin).into())
+        Err(format!("{} URL: {}", err_doc, url).into())
     }
 
-    pub async fn create(&self) -> Result<DesignDoc, Box<dyn Error>> {
+    pub async fn create(&self, url: &str) -> Result<DesignDocSubmitted, Box<dyn Error>> {
         let mut doc = self.clone();
         doc._rev = None;
-        DesignDoc::submit(&doc).await
+        DesignDoc::submit(&doc, url).await
     }
 
-    pub async fn update(&self) -> Result<DesignDoc, Box<dyn Error>> {
-        DesignDoc::submit(&self).await
+    pub async fn update(&self, url: &str) -> Result<DesignDocSubmitted, Box<dyn Error>> {
+        DesignDoc::submit(&self, url).await
     }
 }

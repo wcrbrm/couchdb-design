@@ -2,8 +2,8 @@ use std::error::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-mod designdoc;
 mod designcompare;
+mod designdoc;
 use designcompare::Compare;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -47,9 +47,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             None => {
                 // case that we have no remote URL and need to create it
                 if opt.force {
-                    local_doc._origin = Some(url.to_string());
-                    let result = local_doc.create().await?;
-                    println!("CREATED: REV={} URL={}", result._rev.unwrap(), url);
+                    let result = local_doc.create(url).await?;
+                    println!("CREATED: REV={} URL={}", result.rev.as_str(), url);
                     return Ok(());
                 } else {
                     return Err(format!(
@@ -60,19 +59,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
             Some(remote_doc) => {
-                let rev = remote_doc._rev.clone().unwrap();
-                local_doc._origin = Some(url.to_string());
-                local_doc._rev = Some(rev.clone());
+                let comparison = Compare::docs(&local_doc, &remote_doc);
                 if opt.test {
-                    println!("TEST: {} URL={}", Compare::docs(&local_doc, &remote_doc), url);
+                    println!("{} URL={}", comparison, url);
+                    comparison.show_details()?;
+                } else if comparison.is_modified() {
+                    let rev = remote_doc._rev.clone().unwrap();
+                    local_doc._rev = Some(rev.clone());
+                    let result = local_doc.update(url).await?;
+                    println!("UPDATED: REV={} {} URL={}", 
+                        result.rev.as_str(),comparison, url);
+                    comparison.show_details()?;
                 } else {
-                    let result = local_doc.update().await?;
-                    println!(
-                        "UPDATED: REV={} {} URL={}",
-                        result._rev.unwrap(),
-                        Compare::docs(&local_doc, &remote_doc),
-                        url,
-                    );
+                    println!("{} URL={}", comparison, url);
                 }
             }
         }

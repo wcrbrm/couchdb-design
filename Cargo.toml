@@ -1,6 +1,6 @@
 [package]
 name = "couchdb-design"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["wcrbrm <webcerebrium@gmail.com>"]
 edition = "2018"
 
@@ -14,3 +14,4 @@ serde_yaml = "0.8"
 reqwest = { version = "0.10", features = ["blocking", "json"] }
 tokio = { version = "0.2", features = ["full"] }
 difference = "2.0"
+term = "0.6.1"

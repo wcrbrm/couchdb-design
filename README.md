@@ -2,6 +2,7 @@
 
 A command line interface to work with CouchDB design documents as YAML configurations
 
+### Usage 
 ```
 USAGE:
     couchdb-design [FLAGS] [OPTIONS] <url>
@@ -17,3 +18,13 @@ OPTIONS:
     -f, --file <file>  Local YAML file to be uploaded as design document. If not provided, it will read               URLs and display it as YAML file in stdout
     
 ```
+### Installation
+
+After cloning this repository, please run:
+```
+cargo install --path .
+```
+
+### License
+
+MIT

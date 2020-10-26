@@ -6,11 +6,11 @@ COPY ./Cargo.toml ./Cargo.lock /couchdb-design/
 RUN cargo build --release && rm src/*.rs
 # dependenies are cached. ready to build
 COPY ./src ./src
-RUN rm ./target/release/deps/couchdb-design* && cargo build --release
+RUN cargo build --release
 
 FROM debian:stretch
 RUN apt-get -y update && apt-get -y install ca-certificates
-WORKDIR /app
-VOLUME  /app
+WORKDIR /docs
+VOLUME  /docs
 COPY --from=0 /couchdb-design/target/release/couchdb-design /app/couchdb-design
 CMD ["./app/couchdb-design"]
