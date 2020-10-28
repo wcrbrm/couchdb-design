@@ -13,4 +13,5 @@ RUN apt-get -y update && apt-get -y install ca-certificates
 WORKDIR /docs
 VOLUME  /docs
 COPY --from=builder /couchdb-design/target/release/couchdb-design /usr/bin/couchdb-design
+ENV RUST_BACKTRACE=1
 ENTRYPOINT ["/usr/bin/couchdb-design"]

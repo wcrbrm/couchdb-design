@@ -1,10 +1,10 @@
 extern crate term;
-use std::error::Error;
-use std::collections::HashMap;
-use std::fmt;
-use serde::{Deserialize, Serialize};
-use difference::{ Changeset, Difference };
 use super::designdoc::DesignDoc;
+use difference::{Changeset, Difference};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CompareStrings {
@@ -60,10 +60,13 @@ impl Compare {
                 None => res.added.push(k.clone()),
                 Some(origin_val) => {
                     if v.to_string().trim() != origin_val.to_string().trim() {
-                        res.modified.insert(k.clone(), CompareStrings{ 
-                            new_str: v.to_string().trim().to_string(),
-                            old_str: origin_val.to_string().trim().to_string(),
-                        });
+                        res.modified.insert(
+                            k.clone(),
+                            CompareStrings {
+                                new_str: v.to_string().trim().to_string(),
+                                old_str: origin_val.to_string().trim().to_string(),
+                            },
+                        );
                     } else {
                         res.not_modified.push(k.clone());
                     }
@@ -75,31 +78,44 @@ impl Compare {
     pub fn is_modified(&self) -> bool {
         self.added.len() + self.deleted.len() + self.modified.len() > 0
     }
-    
     pub fn show_details(&self) -> Result<(), Box<dyn Error>> {
         for (k, v) in &self.modified {
             println!("{}", k.to_uppercase());
             let changeset = Changeset::new(v.old_str.as_str(), v.new_str.as_str(), "\n");
-            let mut t = term::stdout().unwrap();
             let diffs = changeset.diffs;
-            for i in 0..diffs.len() {
-                match diffs[i] {
-                    Difference::Same(ref x) => {
-                        t.reset().unwrap();
-                        writeln!(t, " {}", x)?;
-                    }
-                    Difference::Add(ref x) => {
-                        t.fg(term::color::GREEN).unwrap();
-                        writeln!(t, "+{}", x)?;
-                    }
-                    Difference::Rem(ref x) => {
-                        t.fg(term::color::RED).unwrap();
-                        writeln!(t, "-{}", x)?;
+
+            match term::stdout() {
+                None => {
+                    for i in 0..diffs.len() {
+                        match diffs[i] {
+                            Difference::Same(ref x) => { println!(" {}", x); }
+                            Difference::Add(ref x) => { println!("+{}", x); }
+                            Difference::Rem(ref x) => { println!("-{}", x); }
+                        }
                     }
                 }
+                Some(tt) => {
+                    let mut t = tt;
+                    for i in 0..diffs.len() {
+                        match diffs[i] {
+                            Difference::Same(ref x) => {
+                                t.reset().unwrap();
+                                writeln!(t, " {}", x)?;
+                            }
+                            Difference::Add(ref x) => {
+                                t.fg(term::color::GREEN).unwrap();
+                                writeln!(t, "+{}", x)?;
+                            }
+                            Difference::Rem(ref x) => {
+                                t.fg(term::color::RED).unwrap();
+                                writeln!(t, "-{}", x)?;
+                            }
+                        }
+                    }
+                    t.reset().unwrap();
+                    t.flush().unwrap();
+                }
             }
-            t.reset().unwrap();
-            t.flush().unwrap();
         }
         Ok(())
     }
